@@ -22,11 +22,7 @@ template <typename Graph>
 class Kuhn {
 public:
   Kuhn(const Graph& graph, int from, int to, std::vector<int>& match_to)
-    : graph_(graph)
-    , match_to_(match_to)
-    , from_(from)
-    , to_(to) {
-  }
+      : graph_(graph), match_to_(match_to), from_(from), to_(to) {}
 
   void Go() {
     int n = graph_.NumVertices();
@@ -93,7 +89,7 @@ private:
   int from_;
   int to_;
 };
-} // namespace algo
+}  // namespace algo
 
 enum class Ort { Horizontal, Vertical };
 
@@ -107,9 +103,7 @@ struct Renamer {
     return name;
   }
 
-  int NumNames() const {
-    return m_dict.size();
-  }
+  int NumNames() const { return m_dict.size(); }
 
   unordered_map<string, int> m_dict;
 };
@@ -147,9 +141,7 @@ struct Photo {
   Photo() = default;
 
   template <typename Tags>
-  Photo(Ort ort, Tags&& tags)
-    : m_ort(ort)
-    , m_tags(std::forward<Tags>(tags)) {
+  Photo(Ort ort, Tags&& tags) : m_ort(ort), m_tags(std::forward<Tags>(tags)) {
     sort(m_tags.begin(), m_tags.end());
     m_tags.erase(unique(m_tags.begin(), m_tags.end()), m_tags.end());
   }
@@ -160,9 +152,7 @@ struct Photo {
     return m_tags < rhs.m_tags;
   }
 
-  bool operator==(const Photo& rhs) const {
-    return m_ort == rhs.m_ort && m_tags == rhs.m_tags;
-  }
+  bool operator==(const Photo& rhs) const { return m_ort == rhs.m_ort && m_tags == rhs.m_tags; }
 
   Ort m_ort = Ort::Horizontal;
   vector<int> m_tags;
@@ -172,6 +162,26 @@ ostream& operator<<(ostream& os, const Photo& photo) {
   os << "Photo [" << photo.m_ort << ", " << photo.m_tags << "]";
   return os;
 }
+
+struct Index {
+  Index(const vector<Photo>& photos, int numTags) : m_index(numTags) {
+    for (int i = 0; i < photos.size(); ++i) {
+      for (const auto& tag : photos[i].m_tags) {
+        assert(tag < m_index.size());
+        m_index[tag].push_back(i);
+      }
+    }
+  }
+
+  int GetNumTags() const { return m_index.size(); }
+
+  const vector<int>& GetPhotosByTag(int tag) const {
+    assert(tag < m_index.size());
+    return m_index[tag];
+  }
+
+  vector<vector<int>> m_index;
+};
 
 int GetScore(const vector<int>& lhs, const vector<int>& rhs) {
   int inCommon = 0;
@@ -198,11 +208,9 @@ int GetScore(const vector<int>& lhs, const vector<int>& rhs) {
   return min(min(inLeft, inRight), inCommon);
 }
 
-int GetScore(const Photo& lhs, const Photo& rhs) {
-  return GetScore(lhs.m_tags, rhs.m_tags);
-}
+int GetScore(const Photo& lhs, const Photo& rhs) { return GetScore(lhs.m_tags, rhs.m_tags); }
 
-void PrintStats(const vector<Photo>& photos, const vector<vector<int>>& index) {
+void PrintStats(const vector<Photo>& photos, const Index& index) {
   cerr << "Num photos: " << photos.size() << endl;
   unordered_map<int, int> tags;
 
@@ -238,17 +246,17 @@ void PrintStats(const vector<Photo>& photos, const vector<vector<int>>& index) {
 
   int maxList = 0;
   double meanList = 0;
-  for (const auto& list : index) {
+  for (int tag = 0; tag < index.GetNumTags(); ++tag) {
+    const auto& list = index.GetPhotosByTag(tag);
     maxList = max<int>(maxList, list.size());
     meanList += list.size();
   }
   cerr << "Max list size: " << maxList << endl;
-  cerr << "Mean list size: " << meanList / index.size() << endl;
+  cerr << "Mean list size: " << meanList / index.GetNumTags() << endl;
 }
 
 struct Graph {
-  Graph(const vector<Photo>& photos, const vector<vector<int>>& index)
-    : m_adj(2 * photos.size()) {
+  Graph(const vector<Photo>& photos, const vector<vector<int>>& index) : m_adj(2 * photos.size()) {
     for (int i = 0; i < photos.size(); ++i) {
       for (const auto& tag : photos[i].m_tags) {
         assert(tag < index.size());
@@ -271,9 +279,7 @@ struct Graph {
     cerr << "MeanSize: " << static_cast<double>(sumSize) / m_adj.size() << endl;
   }
 
-  int NumVertices() const {
-    return m_adj.size();
-  }
+  int NumVertices() const { return m_adj.size(); }
 
   const vector<int>& OutEdges(int u) const {
     assert(u < m_adj.size());
@@ -319,15 +325,8 @@ vector<int> WithKuhn(const vector<Photo>& photos, const vector<vector<int>>& ind
 }
 
 struct Slide {
-  explicit Slide(int index)
-    : m_ort(Ort::Horizontal)
-    , m_index(index) {
-  }
-  Slide(int left, int right)
-    : m_ort(Ort::Vertical)
-    , m_left(left)
-    , m_right(right) {
-  }
+  explicit Slide(int index) : m_ort(Ort::Horizontal), m_index(index) {}
+  Slide(int left, int right) : m_ort(Ort::Vertical), m_left(left), m_right(right) {}
 
   bool operator==(const Slide& rhs) const {
     return m_ort == rhs.m_ort && m_index == rhs.m_index && m_left == rhs.m_left && m_right == rhs.m_right;
@@ -353,11 +352,7 @@ struct Slide {
 
 struct Pair {
   Pair() = default;
-  Pair(int left, int right, const vector<int>& elems)
-    : m_left(left)
-    , m_right(right)
-    , m_elems(elems) {
-  }
+  Pair(int left, int right, const vector<int>& elems) : m_left(left), m_right(right), m_elems(elems) {}
 
   int m_left = 0;
   int m_right = 0;
@@ -365,8 +360,7 @@ struct Pair {
 };
 
 struct IndexList {
-  explicit IndexList(vector<int>&& indices)
-    : m_indices(std::move(indices)) {
+  explicit IndexList(vector<int>&& indices) : m_indices(std::move(indices)) {
     for (int i = 0; i < m_indices.size(); ++i) {
       const auto index = m_indices[i];
       assert(index >= 0);
@@ -395,13 +389,9 @@ struct IndexList {
     return IndexList{std::move(hors)};
   }
 
-  bool Empty() const {
-    return m_indices.empty();
-  }
+  bool Empty() const { return m_indices.empty(); }
 
-  bool Evicted(int index) const {
-    return index >= m_where.size() || m_where[index] == -1;
-  }
+  bool Evicted(int index) const { return index >= m_where.size() || m_where[index] == -1; }
 
   int GetRandom() const {
     assert(!Empty());
@@ -427,9 +417,7 @@ struct IndexList {
 
 struct Solution {
   Solution() = default;
-  explicit Solution(const vector<Photo>& photos)
-    : m_used(IndexList::FromHors(photos)) {
-  }
+  explicit Solution(const vector<Photo>& photos) : m_used(IndexList::FromHors(photos)) {}
 
   void AddHor(int index, int delta) {
     assert(!m_used.Evicted(index));
@@ -459,36 +447,28 @@ ostream& operator<<(ostream& os, const Solution& solution) {
 }
 
 struct BeamSearch {
-  static inline constexpr int kBeamSize = 10;
+  static inline constexpr int kBeamSize = 100;
   static inline constexpr int kNumTrials = 10000;
   static inline constexpr int kReportDelta = 1000;
 
   struct Update {
     Update() = default;
-    Update(int index, int score, const Solution& solution)
-      : m_index(index)
-      , m_score(score)
-      , m_solution(&solution) {
-    }
+    Update(int index, int score, const Solution& solution) : m_index(index), m_score(score), m_solution(&solution) {}
 
-    bool operator<(const Update& rhs) const {
-      return m_score > rhs.m_score;
-    }
+    bool operator<(const Update& rhs) const { return m_score > rhs.m_score; }
 
     int m_index = 0;
     int m_score = 0;
     const Solution* m_solution = nullptr;
   };
 
-  BeamSearch(const vector<Photo>& photos, const vector<vector<int>>& index)
-    : m_photos(photos)
-    , m_index(index) {
-  }
+  BeamSearch(const vector<Photo>& photos, const Index& index) : m_photos(photos), m_index(index) {}
 
   Solution Solve() {
     vector<Solution> beam;
     vector<Update> updates;
     vector<Solution> nbeam;
+    vector<bool> used(m_photos.size());
 
     {
       auto hors = IndexList::FromHors(m_photos);
@@ -523,26 +503,37 @@ struct BeamSearch {
         if (hors.Empty())
           continue;
 
+        fill(used.begin(), used.end(), false);
+
         assert(!solution.m_prefix.empty());
         const auto prev = solution.m_prefix.back().m_index;
 
         bool added = false;
-        for (const auto& next : m_index[prev]) {
-          if (m_photos[next].m_ort != Ort::Horizontal)
-            continue;
-          if (hors.Evicted(next))
-            continue;
-          updates.emplace_back(next, solution.m_score + GetScore(m_photos[prev], m_photos[next]), solution);
-          added = true;
+        for (const auto& tag : m_photos[prev].m_tags) {
+          for (const auto& next : m_index.GetPhotosByTag(tag)) {
+            if (used[next])
+              continue;
+            if (m_photos[next].m_ort != Ort::Horizontal)
+              continue;
+            if (hors.Evicted(next))
+              continue;
+            updates.emplace_back(next, solution.m_score + GetScore(m_photos[prev], m_photos[next]), solution);
+            used[next] = true;
+            added = true;
+          }
         }
 
         if (added)
           continue;
+
         for (int trial = 0; trial < kNumTrials && !hors.Empty(); ++trial) {
           const auto next = hors.GetRandom();
-          hors.Evict(next);
+          if (used[next])
+            continue;
 
           updates.emplace_back(next, solution.m_score + GetScore(m_photos[prev], m_photos[next]), solution);
+          used[next] = true;
+          hors.Evict(next);
         }
       }
 
@@ -564,7 +555,7 @@ struct BeamSearch {
   }
 
   const vector<Photo>& m_photos;
-  const vector<vector<int>>& m_index;
+  const Index& m_index;
   vector<vector<int>> m_scores;
 };
 
@@ -605,13 +596,7 @@ int main() {
     photos.emplace_back(ort, std::move(tags));
   }
 
-  vector<vector<int>> index(renamer.NumNames());
-  for (int i = 0; i < photos.size(); ++i) {
-    for (const auto& tag : photos[i].m_tags) {
-      assert(tag < index.size());
-      index[tag].push_back(i);
-    }
-  }
+  const Index index{photos, renamer.NumNames()};
 
   PrintStats(photos, index);
 
